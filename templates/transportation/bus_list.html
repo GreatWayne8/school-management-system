@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Bus List{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Bus List</h2>
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">List of Buses</h5>
+        </div>
+        <div class="card-body">
+            <ul class="list-group">
+                {% for bus in buses %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <a href="{% url 'transportation:bus_detail' bus.pk %}" class="text-decoration-none">{{ bus.bus_id }}</a>
+                    <span class="badge bg-primary rounded-pill">{{ bus.route }}</span>
+                </li>
+                {% empty %}
+                <li class="list-group-item">No buses available.</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="card-footer text-center">
+            <a href="{% url 'transportation:create_bus' %}" class="btn btn-primary">Add New Bus</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Transport Requests</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Student</th>
+        <th>Transport Type</th>
+        <th>Pickup Time</th>
+        <th>Pickup Location</th>
+        <th>Drop-off Time</th>
+        <th>Drop-off Location</th>
+        <th>Status</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for request in transport_requests %}
+        <tr>
+          <td>{{ request.student }}</td>
+          <td>{{ request.get_transport_type_display }}</td>
+          <td>{{ request.pickup_time }}</td>
+          <td>{{ request.pickup_location }}</td>
+          <td>{{ request.dropoff_time }}</td>
+          <td>{{ request.dropoff_location }}</td>
+          <td>{{ request.status }}</td>
+          <td>{{ request.notes }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

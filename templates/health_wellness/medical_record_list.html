@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Medical Records List</h1>
+
+{% include "health_wellness/_medical_record_table.html" %}
+
+<h2>Add Medical Record</h2>
+{% if student %}
+    <a href="{% url 'medical_record_create' student_id=student.id %}">Add New Medical Record</a>
+{% else %}
+    <p>No student information available to add a medical record.</p>
+{% endif %}
+
+{% endblock %}

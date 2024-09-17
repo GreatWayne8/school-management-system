@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Route List{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Route List</h2>
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">List of Routes</h5>
+        </div>
+        <div class="card-body">
+            <ul class="list-group">
+                {% for route in routes %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ route.route_id }}
+                    <span class="badge bg-primary rounded-pill">{{ route.route_name }}</span>
+                </li>
+                {% empty %}
+                <li class="list-group-item">No routes available.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

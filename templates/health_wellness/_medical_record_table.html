@@ -1,0 +1,30 @@
+<table class="table table-striped table-bordered mt-4">
+    <thead>
+        <tr>
+            <th>Student</th>
+            <th>Vaccination Status</th>
+            <th>Last Checkup</th>
+            <th>Doctor Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in records %}
+        <tr>
+            <td>{{ record.student.username }}</td>
+            <td>{{ record.vaccination_status }}</td>
+            <td>{{ record.last_checkup }}</td>
+            <td>{{ record.doctor_name }}</td>
+            <td>
+                <!-- Links for viewing and editing -->
+                <a href="{% url 'medical_record_detail' student_id=record.student.id %}">View</a>
+                <a href="{% url 'medical_record_update' record_id=record.id %}">Edit</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No records found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

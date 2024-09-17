@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Check-in List</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"> <!-- Add your CSS file here -->
+</head>
+<body>
+    <div class="container">
+        <h1>Student Check-in List</h1>
+        
+        <!-- Display the date -->
+        <p>Date: {{ today }}</p>
+
+        <!-- Check if there are any students -->
+        {% if students %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Check-in Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                        <tr>
+                            <td>{{ student.username }}</td>
+                            <td>
+                                {% if student.clockedin %}
+                                    <span class="checked-in">Checked In</span>
+                                {% else %}
+                                    <span class="not-checked-in">Not Checked In</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not student.clockedin %}
+                                    <form action="{% url 'attendance:teacher_check_in_student' student.id %}" method="POST">
+                                        {% csrf_token %}
+                                        <button type="submit">Check In</button>
+                                    </form>
+                                {% else %}
+                                    <button disabled>Already Checked In</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No students found.</p>
+        {% endif %}
+
+        <a href="{% url 'attendance:student_records' %}">Back to Student Records</a>
+    </div>
+</body>
+</html>

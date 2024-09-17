@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Pickup List{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Student Pickup List</h2>
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">List of Student Pickups</h5>
+        </div>
+        <div class="card-body">
+            <ul class="list-group">
+                {% for pickup in student_pickups %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ pickup.student }}</strong><br>
+                        <small>Route: {{ pickup.route }}</small><br>
+                        <small>Pickup Location: {{ pickup.pickup_location }}</small><br>
+                        <small>Drop-off Location: {{ pickup.dropoff_location }}</small><br>
+                        <small>Bus: {{ pickup.bus }}</small>
+                    </div>
+                    <span class="badge bg-success rounded-pill">Pickup Time: {{ pickup.pickup_time }}</span>
+                </li>
+                {% empty %}
+                <li class="list-group-item">No student pickups available.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

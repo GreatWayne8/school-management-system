@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4" style="font-size: 2rem; font-weight: 600; color: #333;">Add Medical Record for {{ student.username }}</h2>
+    <div class="card" style="border-radius: 10px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+        <div class="card-header" style="background-color: #007bff; color: white; border-bottom: 1px solid #ddd;">
+            <h4 class="card-title mb-0" style="font-size: 1.5rem; font-weight: 500;">Medical Record Details</h4>
+        </div>
+        <div class="card-body" style="padding: 2rem;">
+            <form method="post">
+                {% csrf_token %}
+                
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Errors:</strong>
+                        <ul>
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <li>{{ field.label }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                
+                <!-- Date of Birth -->
+                <div class="form-group">
+                    <label for="id_date_of_birth" class="form-label">Date of Birth:</label>
+                    {{ form.date_of_birth }}
+                </div>
+                
+                <!-- Allergies -->
+                <div class="form-group">
+                    <label for="id_allergies" class="form-label">Allergies:</label>
+                    {{ form.allergies }}
+                </div>
+                
+                <!-- Medical Conditions -->
+                <div class="form-group">
+                    <label for="id_medical_conditions" class="form-label">Medical Conditions:</label>
+                    {{ form.medical_conditions }}
+                    <small class="form-text text-muted">If none, type "None".</small>
+                </div>
+                
+                <!-- Vaccinations -->
+                <div class="form-group">
+                    <label for="id_vaccinations" class="form-label">Vaccinations:</label>
+                    {{ form.vaccinations }}
+                </div>
+                
+                <!-- Vaccination Status -->
+                <div class="form-group">
+                    <label for="id_vaccination_status" class="form-label">Vaccination Status:</label>
+                    {{ form.vaccination_status }}
+                </div>
+                
+                <!-- Last Checkup -->
+                <div class="form-group">
+                    <label for="id_last_checkup" class="form-label">Last Checkup:</label>
+                    {{ form.last_checkup }}
+                </div>
+                
+                <!-- Doctor Name -->
+                <div class="form-group">
+                    <label for="id_doctor_name" class="form-label">Doctor Name:</label>
+                    {{ form.doctor_name }}
+                </div>
+                
+                <!-- Doctor Contact -->
+                <div class="form-group">
+                    <label for="id_doctor_contact" class="form-label">Doctor Contact:</label>
+                    {{ form.doctor_contact }}
+                </div>
+                
+                <!-- Doctor Email -->
+                <div class="form-group">
+                    <label for="id_doctor_email" class="form-label">Doctor Email:</label>
+                    {{ form.doctor_email }}
+                </div>
+                
+                <!-- Buttons -->
+                <button type="submit" class="btn btn-success" style="font-size: 1rem;">
+                    Save Record
+                </button>
+                <a href="{% url 'medical_record_list' %}" class="btn btn-secondary" style="font-size: 1rem; margin-left: 1rem;">
+                    Back to List
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

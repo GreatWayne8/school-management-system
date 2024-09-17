@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Bus Details{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Bus Details</h2>
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">{{ bus.bus_id }}</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Route:</strong> {{ bus.route }}</p>
+            <p><strong>Capacity:</strong> {{ bus.capacity }}</p>
+            <!-- Add more fields as necessary -->
+        </div>
+        <div class="card-footer text-center">
+            <a href="{% url 'bus_list' %}" class="btn btn-secondary">Back to List</a>
+            <a href="{% url 'edit_bus' bus.pk %}" class="btn btn-warning">Edit</a>
+            <a href="{% url 'delete_bus' bus.pk %}" class="btn btn-danger">Delete</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

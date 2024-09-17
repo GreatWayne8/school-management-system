@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Clock In/Out Records{% endblock title %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>Clock In/Out Records</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Date</th>
+                    <th>Clock In</th>
+                    <th>Clock Out</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record.user.username }}</td>
+                    <td>{{ record.date }}</td>
+                    <td>{{ record.clock_in_time }}</td>
+                    <td>{{ record.clock_out_time|default:"Not clocked out" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock content %}

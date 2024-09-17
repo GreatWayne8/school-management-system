@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Message Details</h2>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">{{ message.subject }}</h5>
+            <h6 class="card-subtitle mb-2 text-muted">From: {{ message.sender }} | Received: {{ message.timestamp }}</h6>
+            <p class="card-text">{{ message.body }}</p>
+            {% if message.attachment %}
+            <a href="{{ message.attachment.url }}" class="btn btn-primary">Download Attachment</a>
+            {% endif %}
+            <a href="{% url 'inbox' %}" class="btn btn-secondary mt-3">Back to Inbox</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

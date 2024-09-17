@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %} Clock Status | Elimu Portal{% endblock %}
+
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+
+{% if user.is_authenticated %}
+
+<nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Attendance</li>
+    </ol>
+</nav>
+
+{% include 'snippets/messages.html' %}
+
+<div class="row">
+    <div class="col-md-12 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <p class="fw-bold"><i class="fas fa-clock"></i> Attendance Status</p>
+
+                {% if clock_record %}
+                    <p><strong>Clocked In Time:</strong> {{ clock_record.clock_in_time }}</p>
+                    {% if clock_record.is_clocked_out %}
+                        <p><strong>Clocked Out Time:</strong> {{ clock_record.clock_out_time }}</p>
+                        <p><strong>Duration:</strong> {{ clock_record.duration }}</p>
+                    {% else %}
+                        <form method="post" action="{% url 'attendance:clock_out' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Clock Out</button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <p>You haven't clocked in today.</p>
+                    <form method="post" action="{% url 'attendance:clock_in' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">Clock In</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+
+{% endblock content %}

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Check-In Students</h2>
+    <ul>
+        {% for student in students %}
+            <li>
+                {{ student.username }}
+                <a href="{% url 'attendance:teacher_check_in_student' student_id=student.id %}">
+                    <button type="button">Check In</button>
+                </a>
+            </li>
+        {% empty %}
+            <li>No students available for check-in.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

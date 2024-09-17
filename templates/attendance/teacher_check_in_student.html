@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Check-In Student</h2>
+    <p>Are you sure you want to check in {{ student.username }}?</p>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">Confirm Check-In</button>
+        <a href="{% url 'attendance:clock_status' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

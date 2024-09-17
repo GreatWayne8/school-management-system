@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Create New Bus{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Create New Bus</h2>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="bus_id" class="form-label">Bus ID</label>
+                    {{ form.bus_id|add_class:"form-control" }}
+                    <div class="invalid-feedback">
+                        Please provide a valid Bus ID.
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="route" class="form-label">Route</label>
+                    {{ form.route|add_class:"form-control" }}
+                    <div class="invalid-feedback">
+                        Please provide a valid route.
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="seats" class="form-label">Number of Seats</label>
+                    {{ form.seats|add_class:"form-control" }}
+                    <div class="invalid-feedback">
+                        Please provide the number of seats.
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="driver" class="form-label">Driver</label>
+                    {{ form.driver|add_class:"form-control" }}
+                    <div class="invalid-feedback">
+                        Please select a driver.
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Create Bus</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+<!-- templates/attendance/teacher_records.html -->
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Teacher Clock In/Out Records</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Date</th>
+        <th>Clock In Time</th>
+        <th>Clock Out Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for record in records %}
+        {% if record.user.is_teacher %}
+          <tr>
+            <td>{{ record.user.username }}</td>
+            <td>{{ record.date }}</td>
+            <td>{{ record.clock_in_time }}</td>
+            <td>{{ record.clock_out_time }}</td>
+          </tr>
+        {% endif %}
+      {% empty %}
+        <tr>
+          <td colspan="4">No records found.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

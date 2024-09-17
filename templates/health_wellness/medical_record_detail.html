@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Medical Records</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>Student</th>
+            <th>Vaccination Status</th>
+            <th>Last Checkup</th>
+            <th>Doctor Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in records %}
+        <tr>
+            <td>{{ record.student.username }}</td>
+            <td>{{ record.vaccination_status }}</td>
+            <td>{{ record.last_checkup }}</td>
+            <td>{{ record.doctor_name }}</td>
+            <td>
+                <a href="{% url 'medical_record_detail' student_id=record.id %}">View</a>
+                <a href="{% url 'medical_record_update' record_id=record.id %}">Edit</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No records found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'medical_record_create' student_id=student.id %}">Add New Medical Record</a>
+{% endblock %}

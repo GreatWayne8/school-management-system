@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Inbox</h2>
+    
+    <!-- Display unread message count -->
+    <p>You have {{ unread_count }} unread {{ unread_count|pluralize:"message,messages" }}.</p>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>From</th>
+                <th>Subject</th>
+                <th>Priority</th>
+                <th>Received</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for message in messages %}
+            <tr class="{% if not message.read %}table-warning{% endif %}">
+                <td>{{ message.sender }}</td>
+                <td>{{ message.subject }}</td>
+                <td>
+                    {% if message.priority == 'High' %}
+                    <span class="badge bg-danger">{{ message.priority }}</span>
+                    {% elif message.priority == 'Medium' %}
+                    <span class="badge bg-warning">{{ message.priority }}</span>
+                    {% else %}
+                    <span class="badge bg-success">{{ message.priority }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ message.timestamp|date:"M d, Y H:i" }}</td>
+                <td>
+                    <a href="{% url 'view_message' message.id %}" class="btn btn-info">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% load static %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Path to the notification sound
+    var sound = new Audio("{% static 'sounds/notification.mp3' %}");
+
+    // Function to play sound if there are unread messages
+    function playNotificationSound() {
+        if ({{ unread_count }} > 0) {
+            sound.play();
+        }
+    }
+
+    // Play sound on page load if there are unread messages
+    playNotificationSound();
+});
+</script>
+
+{% endblock %}

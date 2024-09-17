@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>{{ program.name }}</h2>
+  <p>{{ program.description }}</p>
+  <p>Start Date: {{ program.start_date }}</p>
+  <p>End Date: {{ program.end_date }}</p>
+  <p>Participants:</p>
+  <ul>
+    {% for participant in program.participants.all %}
+      <li>{{ participant.username }}</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

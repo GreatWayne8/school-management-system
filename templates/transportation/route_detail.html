@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Route Detail</h2>
+<p><strong>Route Name:</strong> {{ route.route_name }}</p>
+<p><strong>Stops:</strong> {{ route.stops }}</p>
+<p><strong>Schedule:</strong> {{ route.schedule }}</p>
+<a href="{% url 'route_list' %}">Back to Route List</a>
+{% endblock %}
