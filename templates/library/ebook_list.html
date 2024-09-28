@@ -1,0 +1,9 @@
+<h2>E-Books</h2>
+<ul>
+    {% for ebook in ebooks %}
+        <li>
+            <strong>{{ ebook.title }}</strong> by {{ ebook.author }}
+            <a href="{{ ebook.file.url }}" download>Download</a>
+        </li>
+    {% endfor %}
+</ul>

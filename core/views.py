@@ -33,6 +33,8 @@ def dashboard_view(request):
         "males_count": gender_count["M"],
         "females_count": gender_count["F"],
         "logs": logs,
+        "lab_assistance_count": User.objects.get_lab_assistance_count(),  # Ensure this method exists
+        "office_assistance_count": User.objects.get_office_assistance_count(),  # Ensure this method exists
     }
     return render(request, "core/dashboard.html", context)
 

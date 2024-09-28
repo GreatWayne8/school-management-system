@@ -82,6 +82,7 @@ def profile(request):
             "current_session": current_session,
             "current_semester": current_semester,
         }
+        
         return render(request, "accounts/profile.html", context)
     else:
         staff = User.objects.filter(is_teacher=True)

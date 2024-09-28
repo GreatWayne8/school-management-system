@@ -93,6 +93,17 @@ class CourseManager(models.Manager):
                 or_lookup
             ).distinct()
         return queryset
+class Subjects(models.Model):
+    title = models.CharField(max_length=100, unique=True)  # Unique title for the subject
+    description = models.TextField(blank=True, null=True)  # Optional description of the subject
+    code = models.CharField(max_length=10, unique=True)  # Unique code for the subject
+    level = models.CharField(max_length=25, choices=LEVEL, null=True)  # Level of the subject (e.g., "Grade 1", "Grade 2", etc.)
+    year = models.IntegerField(choices=YEARS, default=0)  # Corresponding year for the subject
+
+    def __str__(self):
+        return self.title
+
+
 
 class Course(models.Model):
     slug = models.SlugField(blank=True, unique=True)
@@ -105,6 +116,9 @@ class Course(models.Model):
     year = models.IntegerField(choices=YEARS, default=0)
     semester = models.CharField(choices=SEMESTER, max_length=200)
     is_elective = models.BooleanField(default=False, blank=True, null=True)
+    
+    # Adding the many-to-many relationship with Subjects
+    subjects = models.ManyToManyField(Subjects, related_name='courses', blank=True)
 
     objects = CourseManager()
 
@@ -159,7 +173,8 @@ class CourseAllocation(models.Model):
         on_delete=models.CASCADE,
         related_name="allocated_teacher",
     )
-    Subjects = models.ManyToManyField(Course, related_name="allocated_course")
+    courses = models.ManyToManyField(Course, related_name="allocated_course")
+    subjects = models.ManyToManyField(Subjects, related_name="allocated_subjects", blank=True)  # New field for subjects
     session = models.ForeignKey(
         "core.Session", on_delete=models.CASCADE, blank=True, null=True
     )
@@ -169,6 +184,7 @@ class CourseAllocation(models.Model):
 
     def get_absolute_url(self):
         return reverse("edit_allocated_course", kwargs={"pk": self.pk})
+
 
 class Upload(models.Model):
     title = models.CharField(max_length=100)

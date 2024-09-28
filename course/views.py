@@ -8,8 +8,6 @@ from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 from django_filters.views import FilterView
-from .forms import CourseAddForm, DropCourseForm
-from .models import Course, CourseOffer, SchoolCalendar
 
 from accounts.models import User, Student
 from core.models import Session, Semester
@@ -25,55 +23,6 @@ from .forms import (
 )
 from .filters import ProgramFilter, CourseAllocationFilter
 from .models import Program, Course, CourseAllocation, Upload, UploadVideo
-
-
-
-@login_required
-def add_course(request):
-    department_head = request.user.departmenthead
-    calendar = SchoolCalendar.objects.latest('start_date')
-
-    if not calendar.is_within_add_drop_period():
-        return render(request, 'error.html', {'message': 'Not within add/drop period.'})
-
-    if request.method == 'POST':
-        form = CourseAddForm(request.POST)
-        if form.is_valid():
-            course = form.save(commit=False)
-            course.program = department_head.program  # Ensure course is associated with the department head's program
-            course.save()
-
-            # Create a CourseOffer instance
-            CourseOffer.objects.create(dep_head=department_head, program=department_head.program, course=course)
-
-            return redirect('course_list')
-    else:
-        form = CourseAddForm()
-    
-    return render(request, 'add_course.html', {'form': form})
-
-
-@login_required
-def drop_course(request, course_id):
-    department_head = request.user.departmenthead
-    calendar = SchoolCalendar.objects.latest('start_date')
-
-    if not calendar.is_within_add_drop_period():
-        return render(request, 'error.html', {'message': 'Not within add/drop period.'})
-
-    try:
-        course_offer = CourseOffer.objects.get(course__id=course_id, dep_head=department_head)
-
-        if course_offer.is_course_available_for_department(course_id):
-            course_offer.course.delete()
-            course_offer.delete()
-            return redirect('course_list')
-        else:
-            return render(request, 'error.html', {'message': 'Course not available for this department head.'})
-    except CourseOffer.DoesNotExist:
-        return render(request, 'error.html', {'message': 'Course not found.'})
-
-
 
 
 @method_decorator([login_required], name="dispatch")
@@ -116,13 +65,13 @@ def program_add(request):
 @login_required
 def program_detail(request, pk):
     program = Program.objects.get(pk=pk)
-    Subjects = Course.objects.filter(program_id=pk).order_by("-year")
+    courses = Course.objects.filter(program_id=pk).order_by("-year")
     credits = Course.objects.aggregate(Sum("credit"))
 
-    paginator = Paginator(Subjects, 10)
+    paginator = Paginator(courses, 10)
     page = request.GET.get("page")
 
-    Subjects = paginator.get_page(page)
+    courses = paginator.get_page(page)
 
     return render(
         request,
@@ -130,7 +79,7 @@ def program_detail(request, pk):
         {
             "title": program.title,
             "program": program,
-            "Subjects": Subjects,
+            "courses": courses,
             "credits": credits,
         },
     )
@@ -183,7 +132,7 @@ def course_single(request, slug):
     videos = UploadVideo.objects.filter(course__slug=slug)
 
     # teachers = User.objects.filter(allocated_teacher__pk=course.id)
-    teachers = CourseAllocation.objects.filter(Subjects__pk=course.id)
+    teachers = CourseAllocation.objects.filter(courses__pk=course.id)
 
     return render(
         request,
@@ -290,18 +239,18 @@ class CourseAllocationFormView(CreateView):
     def form_valid(self, form):
         # if a staff has been allocated a course before update it else create new
         teacher = form.cleaned_data["teacher"]
-        selected_Subjects = form.cleaned_data["Subjects"]
-        Subjects = ()
-        for course in selected_Subjects:
-            Subjects += (course.pk,)
-        # print(Subjects)
+        selected_courses = form.cleaned_data["courses"]
+        courses = ()
+        for course in selected_courses:
+            courses += (course.pk,)
+        # print(courses)
 
         try:
             a = CourseAllocation.objects.get(teacher=teacher)
         except:
             a = CourseAllocation.objects.create(teacher=teacher)
-        for i in range(0, selected_Subjects.count()):
-            a.Subjects.add(Subjects[i])
+        for i in range(0, selected_courses.count()):
+            a.courses.add(courses[i])
             a.save()
         return redirect("course_allocation_view")
 
@@ -487,74 +436,6 @@ def handle_video_delete(request, slug, video_slug):
 # ########################################################
 # Course Registration
 # ########################################################
-# @login_required
-# @student_required
-# def course_registration(request):
-#     if request.method == "POST":
-#         student = get_object_or_404(Student, user__pk=request.user.id)  # Adjusted to get Student by user ID
-#         ids = []
-#         data = request.POST.copy()
-#         data.pop("csrfmiddlewaretoken", None)  # Remove CSRF token
-#         for key in data.keys():
-#             ids.append(str(key))  # Collect course IDs
-        
-#         for course_id in ids:
-#             course = get_object_or_404(Course, pk=course_id)
-#             obj, created = TakenCourse.objects.get_or_create(student=student, course=course)
-#             if not created:
-#                 messages.warning(request, f"Course {course.name} is already registered.")
-#             obj.save()
-        
-#         messages.success(request, "Subjects registered successfully!")
-#         return redirect("course_registration")
-    
-#     else:
-#         current_semester = Semester.objects.filter(is_current_semester=True).first()
-#         if not current_semester:
-#             messages.error(request, "No active semester found.")
-#             return render(request, "course/course_registration.html")
-        
-#         student = get_object_or_404(Student, user__id=request.user.id)
-#         taken_subjects = TakenCourse.objects.filter(student=student)
-#         registered_course_ids = [subject.course.id for subject in taken_subjects]
-
-#         subjects = Course.objects.filter(
-#             program=student.program.id,  # Adjusted based on your relationship
-#             level=student.level,
-#             semester=current_semester,
-#         ).exclude(id__in=registered_course_ids).order_by("year")
-
-#         all_subjects = Course.objects.filter(
-#             level=student.level, program=student.program
-#         )
-
-#         no_course_is_registered = not taken_subjects.exists()
-#         all_subjects_are_registered = all_subjects.count() == len(registered_course_ids)
-
-#         total_first_semester_credit = sum(
-#             int(course.credit) for course in subjects if course.semester == "First"
-#         )
-#         total_sec_semester_credit = sum(
-#             int(course.credit) for course in subjects if course.semester == "Second"
-#         )
-#         total_registered_credit = sum(
-#             int(course.credit) for course in taken_subjects
-#         )
-
-#         context = {
-#             "is_calendar_on": True,
-#             "all_subjects_are_registered": all_subjects_are_registered,
-#             "no_course_is_registered": no_course_is_registered,
-#             "current_semester": current_semester,
-#             "subjects": subjects,
-#             "total_first_semester_credit": total_first_semester_credit,
-#             "total_sec_semester_credit": total_sec_semester_credit,
-#             "registered_subjects": taken_subjects,
-#             "total_registered_credit": total_registered_credit,
-#             "student": student,
-#         }
-#         return render(request, "course/course_registration.html", context)
-
 @login_required
 @student_required
 def course_registration(request):
@@ -634,26 +515,23 @@ def course_registration(request):
         return render(request, "course/course_registration.html", context)
 
 
-
-
 @login_required
 @student_required
 def course_drop(request):
     if request.method == "POST":
         student = Student.objects.get(student__pk=request.user.id)
-        ids = tuple(request.POST.keys())  # Get course IDs from POST data
-        for course_id in ids:
-            course = get_object_or_404(Course, pk=course_id)
-            try:
-                taken_course = TakenCourse.objects.get(student=student, course=course)
-                taken_course.delete()
-            except TakenCourse.DoesNotExist:
-                messages.error(request, f"Course {course.title} not found in your registered courses.")
-        messages.success(request, "Courses dropped successfully!")
+        ids = ()
+        data = request.POST.copy()
+        data.pop("csrfmiddlewaretoken", None)  # remove csrf_token
+        for key in data.keys():
+            ids = ids + (str(key),)
+        for s in range(0, len(ids)):
+            course = Course.objects.get(pk=ids[s])
+            obj = TakenCourse.objects.get(student=student, course=course)
+            obj.delete()
+        messages.success(request, "Successfully Dropped!")
         return redirect("course_registration")
-    else:
-        # Handle GET request if needed
-        return redirect("course_registration")
+
 
 # ########################################################
 
@@ -661,23 +539,23 @@ def course_drop(request):
 @login_required
 def user_course_list(request):
     if request.user.is_teacher:
-        Subjects = Course.objects.filter(allocated_course__teacher__pk=request.user.id)
+        courses = Course.objects.filter(allocated_course__teacher__pk=request.user.id)
 
-        return render(request, "course/user_course_list.html", {"Subjects": Subjects})
+        return render(request, "course/user_course_list.html", {"courses": courses})
 
     elif request.user.is_student:
         student = Student.objects.get(student__pk=request.user.id)
-        taken_Subjects = TakenCourse.objects.filter(
+        taken_courses = TakenCourse.objects.filter(
             student__student__id=student.student.id
         )
-        Subjects = Course.objects.filter(level=student.level).filter(
+        courses = Course.objects.filter(level=student.level).filter(
             program__pk=student.program.id
         )
 
         return render(
             request,
             "course/user_course_list.html",
-            {"student": student, "taken_Subjects": taken_Subjects, "Subjects": Subjects},
+            {"student": student, "taken_courses": taken_courses, "courses": courses},
         )
 
     else:

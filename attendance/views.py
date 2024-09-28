@@ -71,8 +71,9 @@ def student_check_in_list(request):
 
     # Fetch students from the database with is_student=True
     students = User.objects.filter(is_student=True)
+    if not students.exists():
+        print("No students found!")
 
-    # Check each student’s clock-in status for the current date
     for student in students:
         student.clockedin = ClockInOut.objects.filter(user=student, date=today, clock_out_time__isnull=True).exists()
 
@@ -80,6 +81,7 @@ def student_check_in_list(request):
         'students': students,
         'today': today,
     })
+
 
 class ClockInOutRecordsView(ListView):
     model = ClockInOut
@@ -117,38 +119,44 @@ def teacher_check_in_student(request, student_id):
     student = get_object_or_404(User, id=student_id, is_student=True)
     today = timezone.now().date()
 
+    print(f"Student fetched: {student.username} (ID: {student.id})")
+
     existing_check_in = ClockInOut.objects.filter(user=student, date=today, clock_out_time__isnull=True).exists()
+
+    print(f"Existing check-in status: {existing_check_in}")
 
     if existing_check_in:
         messages.error(request, f"{student.username} is already checked in for today.")
-        return redirect('attendance:student_records')
+        return redirect('attendance:clock_status')
 
     if request.method == "POST":
+        print("Form submitted!")
+
         ClockInOut.objects.create(
             user=student,
             date=today,
             clock_in_time=timezone.now()
         )
         messages.success(request, f"{student.username} has been successfully checked in.")
-        return redirect('attendance:student_records')
+        return redirect('attendance:clock_status')
 
     return render(request, 'attendance/teacher_check_in_student.html', {'student': student})
-
 
 
 @login_required
 def student_list(request):
     students = User.objects.filter(is_student=True)
     return render(request, 'attendance/student_list.html', {'students': students})
+
 @login_required
 def student_records(request):
     today = timezone.now().date()
     checked_in_students = ClockInOut.objects.filter(
+        user__is_student=True,  
         date=today,
-        clock_out_time__isnull=True
-    ).distinct('user')  # Ensure unique users
+        clock_out_time__isnull=True 
+    ).distinct('user')   
 
-    # No clocking out for students, just showing who is currently checked in
     return render(request, 'attendance/student_records.html', {
         'today': today,
         'checked_in_students': checked_in_students

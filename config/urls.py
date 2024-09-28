@@ -23,6 +23,8 @@ urlpatterns = [
     path('fees/', include('fees.urls')), 
     path('messaging/', include('messaging.urls')),
     path('health_wellness/', include('health_wellness.urls')),
+    path('library/', include('library.urls')),
+
 
 
 

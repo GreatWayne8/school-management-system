@@ -1,0 +1,6 @@
+<h2>Library Categories</h2>
+<ul>
+    {% for category in categories %}
+        <li><a href="{% url 'ebook_list' category.id %}">{{ category.name }}</a></li>
+    {% endfor %}
+</ul>

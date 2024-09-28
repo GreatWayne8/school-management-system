@@ -62,8 +62,15 @@ class CustomUserManager(UserManager):
 
     def get_superuser_count(self):
         return self.model.objects.filter(is_superuser=True).count()
+    
+    def get_lab_assistance_count(self):
+        return self.model.objects.filter(is_lab_assistant=True).count()
+    
+    def get_office_assistance_count(self):
+        return self.model.objects.filter(is_office_assistant=True).count()  
 
-
+    def get_drivers_count(self):
+        return self.model.objects.filter(is_driver=True).count()
 GENDERS = (("M", "Male"), ("F", "Female"))
 
 
@@ -73,6 +80,8 @@ class User(AbstractUser):
     is_parent = models.BooleanField(default=False)
     is_dep_head = models.BooleanField(default=False)
     is_driver = models.BooleanField(default=False)
+    is_office_assistant =models.BooleanField(default=False)
+    is_lab_assistant = models.BooleanField(default=False)
     gender = models.CharField(max_length=1, choices=GENDERS, blank=True, null=True)
     phone = models.CharField(max_length=60, blank=True, null=True)
     address = models.CharField(max_length=60, blank=True, null=True)
