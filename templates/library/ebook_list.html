@@ -1,4 +1,4 @@
-<h2>E-Books</h2>
+<!-- <h2>E-Books</h2>
 <ul>
     {% for ebook in ebooks %}
         <li>
@@ -6,4 +6,32 @@
             <a href="{{ ebook.file.url }}" download>Download</a>
         </li>
     {% endfor %}
-</ul>
+</ul> -->
+<!-- templates/ebook_list.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>E-books</title>
+</head>
+<body>
+    <h1>E-books</h1>
+
+    {% if ebooks %}
+        <ul>
+            {% for ebook in ebooks %}
+                <li>{{ ebook.title }} by {{ ebook.author }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No e-books available.</p>
+    {% endif %}
+
+    <h2>Categories</h2>
+    <ul>
+        {% for category in categories %}
+            <li>{{ category.name }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

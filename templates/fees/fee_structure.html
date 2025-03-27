@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="display-4 mb-4 text-primary">Fee Structure</h1>
+    <div class="card p-4 shadow-sm">
+        
+        {% if user.is_staff %} 
+            <h3 class="mb-3 text-success">Create or Update Fee Structure</h3>
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary btn-lg">Save</button>
+            </form>
+        {% else %}
+            <h3 class="mb-3 text-info">Current Fee Structure</h3>
+        {% endif %}
+
+        <table class="table table-bordered mt-4">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Category</th>
+                    <th>Amount (KSh)</th>
+                    <th>Due Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fee in fee_structures %}
+                <tr>
+                    <td>{{ fee.category.name }}</td>
+                    <td>{{ fee.amount }}</td>
+                    <td>{{ fee.due_date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <a href="{% url 'fees:fee_payment' %}" class="btn btn-secondary mt-3">Back to Payments</a>
+</div>
+{% endblock %}

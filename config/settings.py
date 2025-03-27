@@ -12,6 +12,18 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 from decouple import config
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
+# Retrieve the values
+MPESA_CONSUMER_KEY = os.getenv("MPESA_CONSUMER_KEY")
+MPESA_CONSUMER_SECRET = os.getenv("MPESA_CONSUMER_SECRET")
+MPESA_SHORTCODE = os.getenv("MPESA_SHORTCODE")
+MPESA_PASSKEY = os.getenv("MPESA_PASSKEY")
+MPESA_ENVIRONMENT = os.getenv("MPESA_ENVIRONMENT")
+MPESA_CALLBACK_URL = os.getenv("MPESA_CALLBACK_URL")
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -27,7 +39,7 @@ SECRET_KEY = config(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=True, cast=bool)
 
-ALLOWED_HOSTS = ["127.0.0.1", "your-domain.com"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver"]
 
 # change the default user models to our custom model
 AUTH_USER_MODEL = "accounts.User"
@@ -77,14 +89,15 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PROJECT_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # whitenoise to serve static files
 ]
+
 
 ROOT_URLCONF = "config.urls"
 
@@ -113,15 +126,22 @@ WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
 
+# MPESA_SHORTCODE = "174379"
+# MPESA_PASSKEY = "bfb279f9aa9b8bdf1f46854f5d5ed1cf2c2c712db44e27a792a77b86a3f6cbe5"
+# MPESA_CONSUMER_KEY = "x6lsuzaMg9BuxBoffaGZjmzsKlGsRMftbr2za3lMyGdjEdzG"
+# MPESA_CONSUMER_SECRET = "1uc300MZmJrefyMs5zzgEvP9URGm4sUcGhWmZGfAd9tWzQGioGcMUt1v0bt1tcxC"
+# MPESA_CALLBACK_URL = "https://vecs.vihigaeducationcity.sc.ke/fees/mpesa_callback/"
+
+
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    }
+}
 
 # -----------------------------
 # NOTE: Some model fields may not work on sqlite db,
@@ -138,16 +158,29 @@ ASGI_APPLICATION = "config.asgi.application"
 #     }
 # }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'new_db_elimu',
-        'USER': 'new_db_user',
-        'PASSWORD': 'new_password',
-        'HOST': 'localhost',  # or your database host
-        'PORT': '5432',       # or your database port
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'new_db_elimu',
+#         'USER': 'new_db_user',
+#         'PASSWORD': 'new_password',
+#         'HOST': 'localhost',  
+#         'PORT': '5432',       
+#     }
+# }
+
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'school_management_system',
+#         'USER': 'postgres',                 
+#         'PASSWORD': 'greatest',
+#         'HOST': 'localhost',               
+#         'PORT': '5432',                     
+#     }
+# }
+
 
 
 

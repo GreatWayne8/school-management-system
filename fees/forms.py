@@ -1,5 +1,13 @@
 from django import forms
 from .models import Payment
+from .models import FeeStructure 
+
+
+
+class FeeStructureForm(forms.ModelForm):
+    class Meta:
+        model = FeeStructure
+        fields = '__all__'
 
 class PaymentForm(forms.ModelForm):
     class Meta:

@@ -149,12 +149,16 @@ class User(AbstractUser):
 class StudentManager(models.Manager):
     def search(self, query=None):
         qs = self.get_queryset()
-        if query is not None:
-            or_lookup = Q(level__icontains=query)
+        if query:
+            or_lookup = (
+                Q(student__first_name__icontains=query) |
+                Q(student__last_name__icontains=query) |
+                Q(student__username__icontains=query) |
+                Q(student__email__icontains=query) |
+                Q(level__icontains=query)
+            )
             qs = qs.filter(or_lookup).distinct()
         return qs
-
-
 
 class Student(models.Model):
     student = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='accounts_student')
@@ -166,9 +170,10 @@ class Student(models.Model):
     class Meta:
         ordering = ("-student__date_joined",)
 
-    def __str__(self):
-        print(self.student) 
-        return self.student.get_full_name
+    def __str__(self): 
+        return self.student.get_full_name()
+
+    
 
     @classmethod
     def get_gender_count(cls):

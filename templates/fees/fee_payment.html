@@ -37,10 +37,22 @@
     <div class="mb-4">
         <h1 class="display-4 mb-4 text-success">Make a Payment</h1>
         <div class="card p-4 shadow-sm">
-            <form method="post">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn btn-success btn-lg">Submit Payment</button>
+            <form method="post" action="{% url 'fees:fee_payment' %}">
+                {% csrf_token %}  <!-- ✅ Added CSRF token here -->
+
+                <label for="id_student">Student:</label>
+                {{ form.student }}
+
+                <label for="id_fee_structure">Fee Structure:</label>
+                {{ form.fee_structure }}
+
+                <label for="id_amount_paid">Amount:</label>
+                <input type="number" name="amount_paid" id="id_amount_paid" class="form-control" required>
+
+                <label for="id_payment_method">Payment Method:</label>
+                {{ form.payment_method }}
+
+                <button type="submit" class="btn btn-success btn-lg mt-3">Submit Payment</button>
             </form>
         </div>
     </div>

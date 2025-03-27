@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from .models import Ebook, Category
 from .forms import EbookForm
@@ -10,23 +10,30 @@ def library_view(request):
     # Fetch all e-books
     ebooks = Ebook.objects.all()
 
-    # Superuser or teacher can add books
-    if request.user.is_superuser or request.user.is_teacher:
-        if request.method == 'POST':
-            # Code to add a new e-book
-            pass
-
     context = {
         'ebooks': ebooks,
+        'request': request,  
     }
 
     return render(request, 'library/library.html', context)
 
+
 @user_passes_test(lambda u: u.is_superuser)
 def manage_library_view(request):
-    # Admin management for e-books (add, edit, delete)
-    # Logic for managing e-books
-    pass
+    if request.method == 'POST':
+        form = EbookForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('manage_library') 
+    else:
+        form = EbookForm() 
+
+    ebooks = Ebook.objects.all()
+    
+    return render(request, 'library/manage_library.html', {
+        'form': form,
+        'ebooks': ebooks,
+    })
 
 def ebook_list(request, category_id=None):
     """
@@ -37,8 +44,35 @@ def ebook_list(request, category_id=None):
     else:
         ebooks = Ebook.objects.all()
     
-    categories = Category.objects.all()
-    return render(request, 'ebook_list.html', {'ebooks': ebooks, 'categories': categories})
+    categories = Category.objects.all() 
+    return render(request, 'library/ebook_list.html', {'ebooks': ebooks, 'categories': categories})
+def download_ebook(request, ebook_id):
+    ebook = get_object_or_404(Ebook, id=ebook_id)
+
+    # Serve the file as a download
+    response = HttpResponse(ebook.file, content_type='application/pdf') 
+    response['Content-Disposition'] = f'attachment; filename="{ebook.title}.pdf"'  
+    return response
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def edit_ebook(request, ebook_id):
+    ebook = get_object_or_404(Ebook, id=ebook_id)
+    if request.method == 'POST':
+        form = EbookForm(request.POST, request.FILES, instance=ebook)
+        if form.is_valid():
+            form.save()
+            return redirect('library') 
+    else:
+        form = EbookForm(instance=ebook)
+    return render(request, 'library/edit_ebook.html', {'form': form, 'ebook': ebook})
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def delete_ebook(request, ebook_id):
+    ebook = get_object_or_404(Ebook, id=ebook_id)
+    ebook.delete()
+    return redirect('library')    
 
 def upload_ebook(request):
     """
@@ -52,7 +86,8 @@ def upload_ebook(request):
     else:
         form = EbookForm()
     
-    return render(request, 'upload_ebook.html', {'form': form})
+    return render(request, 'library/upload_ebook.html', {'form': form})
+
 
 def library_categories_view(request):
     categories = LibraryCategory.objects.all()
