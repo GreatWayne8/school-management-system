@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Payments</h2>
+    {% if payments %}
+        <table>
+            <tr>
+                <th>Student</th>
+                <th>Amount</th>
+                <th>Date</th>
+            </tr>
+            {% for payment in payments %}
+                <tr>
+                    <td>{{ payment.student.username }}</td>
+                    <td>{{ payment.amount }}</td>
+                    <td>{{ payment.date }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No payments found.</p>
+    {% endif %}
+{% endblock %}

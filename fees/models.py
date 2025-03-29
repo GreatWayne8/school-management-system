@@ -1,6 +1,9 @@
-
 from django.db import models
 from django.conf import settings
+from django.contrib.auth import get_user_model
+
+
+User = get_user_model()
 
 
 class Student(models.Model):
@@ -21,6 +24,7 @@ class FeeStructure(models.Model):
     category = models.ForeignKey(FeeCategory, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     due_date = models.DateField()
+    term = models.CharField(max_length=20, default="3")
 
     def __str__(self):
         return f"{self.category.name} - {self.amount}"
@@ -35,8 +39,17 @@ class FeeStatement(models.Model):
         return f"{self.student} - Balance: {self.balance}"
 
 
+def get_default_payer():
+    return User.objects.first().id if User.objects.exists() else None  # Set default to first user
+
 class Payment(models.Model):
-    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    payer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="payments_made",
+        default=get_default_payer  # Automatically assigns an existing user
+    )
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="payments_received")
     fee_structure = models.ForeignKey(FeeStructure, on_delete=models.CASCADE)
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
     payment_date = models.DateField(auto_now_add=True)
@@ -49,4 +62,4 @@ class Payment(models.Model):
     ], default="Pending")
 
     def __str__(self):
-        return f"{self.student.username} - {self.amount_paid} - {self.status}"
+        return f"{self.payer.username} paid for {self.student.name} - {self.amount_paid} - {self.status}"

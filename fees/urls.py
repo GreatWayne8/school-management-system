@@ -1,15 +1,17 @@
 from django.urls import path
-from .views import fee_payment_view, create_fee_structure
+from . import views
 
 app_name = 'fees'
 
 urlpatterns = [
-    path('fee-payment/', fee_payment_view, name='fee_payment'),
-    path('create-fee/', create_fee_structure, name='create_fee_structure'), 
-    path('fee-statements/', FeeStatementListCreateView, name='fee-statement-list-create'),
-    path('fee-statements/<int:pk>/', FeeStatementRetrieveUpdateDeleteView.as_view(), name='fee-statement'), 
-    # path("mpesa_callback/", mpesa_callback, name="mpesa_callback"),
-    # path('mpesa/token/', get_mpesa_token, name='mpesa_token'),
+    # Fee Structure URLs
+    path('fee-structure/create/', views.create_fee_structure, name='create_fee_structure'),
+    path('fee-structure/edit/<int:fee_id>/', views.edit_fee_structure, name='edit_fee_structure'),
+    path('fee-structure/delete/<int:fee_id>/', views.delete_fee_structure, name='delete_fee_structure'),
+    path('fee-structure/', views.fee_structure_list, name='fee_structure_list'),
 
-
+    # Payment URLs
+    path('payments/', views.payment_list, name='payment_list'),
+    path('payments/pay/', views.fee_payment_view, name='make_payment'),  # Make a payment
+    path('payments/receipt/<int:payment_id>/', views.generate_receipt, name='generate_receipt'),
 ]

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Fee Structure</h2>
+<a href="{% url 'fees:create_fee_structure' %}" class="btn btn-primary">Add Fee Structure</a>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Class Name</th>
+            <th>Term</th>
+            <th>Amount</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for fee in fee_structures %}
+        <tr>
+            <td>{{ fee.class_name }}</td>
+            <td>{{ fee.term }}</td>
+            <td>{{ fee.amount }}</td>
+            <td>
+                <a href="{% url 'fees:edit_fee_structure' fee.id %}" class="btn btn-warning">Edit</a>
+                <a href="{% url 'fees:delete_fee_structure' fee.id %}" class="btn btn-danger">Delete</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No fee structures found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

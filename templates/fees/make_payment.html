@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Make a Payment</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Submit Payment</button>
+</form>
+<a href="{% url 'fees:payment_list' %}" class="btn btn-secondary">View Payments</a>
+{% endblock %}

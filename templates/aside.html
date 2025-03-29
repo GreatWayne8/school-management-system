@@ -230,20 +230,42 @@
                     </a>
                 </li>
             </ul>
-            {% if request.user.is_superuser or request.user.is_student %}
+
+            {% if request.user.is_superuser or is_student %}
             <br />
-            <p class="ml-3" data-bs-toggle="collapse" data-bs-target="#paymentsMenu" aria-expanded="false"
-                aria-controls="paymentsMenu" style="cursor: pointer;">
-                <i class="fas fa-money-bill-wave"></i> Payments
+            <p class="ml-3" data-bs-toggle="collapse" data-bs-target="#feesMenu" aria-expanded="false"
+                aria-controls="feesMenu" style="cursor: pointer;">
+                <i class="fas fa-money-bill-wave"></i> Fees Management
             </p>
-            <ul id="paymentsMenu" class="collapse">
-                <li class="{% if request.path == fee_payment_url %}active{% endif %}">
-                    <a href="{{ fee_payment_url }}">
-                        <i class="fas fa-dollar-sign"></i> Fee Payment
+            <ul id="feesMenu" class="collapse">
+                <li class="{% if '/fees/fee-structure/' in request.path %}active{% endif %}">
+                    <a href="{% url 'fees:fee_structure_list' %}">
+                        <i class="fas fa-list"></i> Fee Structure
+                    </a>
+                </li>
+
+                {% if request.user.is_superuser %}
+                <li class="{% if request.path == '/fees/fee-structure/create/' %}active{% endif %}">
+                    <a href="{% url 'fees:create_fee_structure' %}">
+                        <i class="fas fa-plus-circle"></i> Create Fee Structure
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="{% if request.path == '/fees/payments/' %}active{% endif %}">
+                    <a href="{% url 'fees:payment_list' %}">
+                        <i class="fas fa-dollar-sign"></i> Payments
                     </a>
                 </li>
             </ul>
             {% endif %}
+
+
+
+
+
+
+
 
             <!-- Collapsible Attendance Section -->
             <br />
