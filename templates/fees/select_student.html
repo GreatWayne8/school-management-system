@@ -1,0 +1,145 @@
+{% extends 'base.html' %}  <!-- Assuming you have a base template -->
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">Select Student for Fee Payment</h2>
+    
+    <!-- Filter Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <!-- Level Filter -->
+                <div class="col-md-3">
+                    <label for="level" class="form-label">Level</label>
+                    <select name="level" id="level" class="form-select">
+                        <option value="">All Levels</option>
+                        <option value="Kindergarten" {% if request.GET.level == "Kindergarten" %}selected{% endif %}>Kindergarten</option>
+                        <option value="Primary" {% if request.GET.level == "Primary" %}selected{% endif %}>Primary</option>
+                        <option value="Junior Secondary" {% if request.GET.level == "Junior Secondary" %}selected{% endif %}>Junior Secondary</option>
+                    </select>
+                </div>
+                
+                <!-- Term Filter -->
+                <div class="col-md-3">
+                    <label for="term" class="form-label">Term</label>
+                    <select name="term" id="term" class="form-select">
+                        <option value="">All Terms</option>
+                        {% for value, label in terms %}
+                            <option value="{{ value }}" {% if request.GET.term == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Academic Year Filter -->
+                <div class="col-md-3">
+                    <label for="academic_year" class="form-label">Academic Year</label>
+                    <select name="academic_year" id="academic_year" class="form-select">
+                        <option value="">All Years</option>
+                        {% for year in academic_years %}
+                            <option value="{{ year.id }}" {% if request.GET.academic_year == year.id|stringformat:"s" %}selected{% endif %}>{{ year.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Fee Category Filter -->
+                <div class="col-md-3">
+                    <label for="fee_category" class="form-label">Fee Category</label>
+                    <select name="fee_category" id="fee_category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for category in fee_categories %}
+                            <option value="{{ category.id }}" {% if request.GET.fee_category == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <a href="{% url 'fees:select_student' %}" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Table -->
+    <div class="card">
+        <div class="card-body">
+            {% if students %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Admission No.</th>
+                            <th>Class</th>
+                            <th>Available Fee Structures</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>{{ student.name }}</td>
+                            <td>{{ student.admission_number }}</td>
+                            <td>{{ student.current_class }}</td>
+                            <td>
+                                {% with available_fees=fee_structures %}
+                                    {% if available_fees %}
+                                        <select class="form-select form-select-sm fee-select">
+                                            {% for fee in available_fees %}
+                                                <option value="{{ fee.id }}">
+                                                    {{ fee.category.name }} (Term {{ fee.term }}) - {{ fee.amount }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    {% else %}
+                                        <span class="text-muted">No matching fees</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td>
+                                {% with available_fees=fee_structures %}
+                                    {% if available_fees %}
+                                        <a href="#" class="btn btn-sm btn-primary pay-btn" 
+                                           data-student-id="{{ student.id }}"
+                                           data-fee-id="{{ available_fees.0.id }}">Pay</a>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                No students found matching your criteria.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript to handle fee selection -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update payment button when fee selection changes
+    document.querySelectorAll('.fee-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const row = this.closest('tr');
+            const payBtn = row.querySelector('.pay-btn');
+            payBtn.dataset.feeId = this.value;
+        });
+    });
+
+    // Handle payment button click
+    document.querySelectorAll('.pay-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const studentId = this.dataset.studentId;
+            const feeId = this.dataset.feeId;
+            window.location.href = `{% url 'fees:make_payment' 0 %}?fee_structure=${feeId}`.replace('0', studentId);
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,10 +1,88 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2>Make a Payment</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Submit Payment</button>
-</form>
-<a href="{% url 'fees:payment_list' %}" class="btn btn-secondary">View Payments</a>
+<div class="container py-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4>
+                <i class="fas fa-money-bill-wave me-2"></i>
+                {% if is_parent %}Payment for {{ student.name }}{% else %}Make Payment{% endif %}
+            </h4>
+        </div>
+
+        <div class="card-body">
+            <form method="POST">
+                {% csrf_token %}
+
+                <!-- STUDENT FIELD -->
+                {% if is_parent %}
+                    {# Parents see their child's name as text #}
+                    <div class="mb-3">
+                        <label class="form-label">Student</label>
+                        <input type="text" class="form-control" value="{{ student.name }}" readonly>
+                        <input type="hidden" name="student" value="{{ student.id }}">
+                    </div>
+                {% elif student %}
+                    {# Pre-selected student for staff #}
+                    <div class="mb-3">
+                        <label class="form-label">Student</label>
+                        <input type="text" class="form-control" value="{{ student.name }}" readonly>
+                        <input type="hidden" name="student" value="{{ student.id }}">
+                    </div>
+                {% else %}
+                    {# Staff/teacher student selection #}
+                    <div class="mb-3">
+                        <label class="form-label">Select Student</label>
+                        <select name="student" class="form-select" required>
+                            <option value="">Choose student...</option>
+                            {% for s in all_students %}
+                                <option value="{{ s.id }}">{{ s.name }} ({{ s.admission_number }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
+
+                <!-- FEE STRUCTURE -->
+                <div class="mb-3">
+                    <label class="form-label">Fee Item</label>
+                    <select name="fee_structure" class="form-select" required
+                            onchange="document.getElementById('amount').value=this.options[this.selectedIndex].getAttribute('data-amount')">
+                        <option value="">Select fee item...</option>
+                        {% for fee in fee_structures %}
+                            <option value="{{ fee.id }}" data-amount="{{ fee.amount }}"
+                                {% if form.fee_structure.value == fee.id %}selected{% endif %}>
+                                {{ fee.category.name }} - {{ CURRENCY_SYMBOL }}{{ fee.amount }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- AMOUNT -->
+                <div class="mb-3">
+                    <label class="form-label">Amount ({{ CURRENCY_SYMBOL }})</label>
+                    <input type="number" name="amount_paid" id="amount" 
+                           class="form-control" value="{{ form.amount_paid.value|default:'' }}"
+                           step="0.01" min="0" required>
+                </div>
+
+                <!-- PAYMENT METHOD -->
+                <div class="mb-3">
+                    <label class="form-label">Payment Method</label>
+                    <select name="payment_method" class="form-select" required>
+                        <option value="">Select method...</option>
+                        {% for value, label in form.fields.payment_method.choices %}
+                            <option value="{{ value }}" {% if form.payment_method.value == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-success w-100 mt-3">
+                    <i class="fas fa-check-circle me-2"></i> Complete Payment
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}

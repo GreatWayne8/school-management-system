@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment Receipt - {{ payment.receipt_number }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">PAYMENT RECEIPT</h4>
+                        <span class="badge bg-light text-primary fs-6">#{{ payment.receipt_number }}</span>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- School/Organization Header -->
+                    <div class="text-center mb-4">
+                        <h2 class="mb-1">{{ request.site.name }}</h2>
+                        <p class="mb-1 text-muted">{{ request.site.domain }}</p>
+                        <p class="mb-0 text-muted">Payment Receipt</p>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Payment Details -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Student Information</h5>
+                            <p class="mb-1"><strong>Name:</strong> {{ payment.student.name }}</p>
+                            <p class="mb-1"><strong>Admission No:</strong> {{ payment.student.admission_number }}</p>
+                            <p class="mb-1"><strong>Class:</strong> {{ payment.student.current_class }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Payment Information</h5>
+                            <p class="mb-1"><strong>Date:</strong> {{ payment.payment_date|date:"F j, Y" }}</p>
+                            <p class="mb-1"><strong>Time:</strong> {{ payment.payment_date|time:"H:i" }}</p>
+                            <p class="mb-1"><strong>Status:</strong> 
+                                <span class="badge bg-{% if payment.status == 'Completed' %}success{% else %}warning{% endif %}">
+                                    {{ payment.get_status_display }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Fee Details Table -->
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        {{ payment.fee_structure.category.name }} - 
+                                        {{ payment.fee_structure.get_term_display }} Term
+                                        ({{ payment.fee_structure.academic_year.name }})
+                                    </td>
+                                    <td>{{ payment.amount_paid }}</td>
+                                </tr>
+                                {% if payment.balance > 0 %}
+                                <tr>
+                                    <td><strong>Balance Carried Forward</strong></td>
+                                    <td>{{ payment.balance }}</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th>Total Paid</th>
+                                    <th>{{ payment.amount_paid }}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <!-- Payment Method -->
+                    <div class="mb-4">
+                        <h5>Payment Method</h5>
+                        <p>
+                            {{ payment.get_payment_method_display }}
+                            {% if payment.transaction_reference %}
+                                (Reference: {{ payment.transaction_reference }})
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <!-- Received By -->
+                    <div class="mb-4">
+                        <h5>Received By</h5>
+                        <p>{{ payment.payer.get_full_name|default:payment.payer.username }}</p>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Footer Notes -->
+                    <div class="text-center text-muted small">
+                        <p class="mb-1">This is an official receipt from {{ request.site.name }}</p>
+                        <p class="mb-1">For any inquiries, please contact the finance office</p>
+                        <p>Generated on {% now "F j, Y H:i" %}</p>
+                    </div>
+                </div>
+                
+                <!-- Print Button -->
+                <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'fees:payment_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Payments
+                        </a>
+                        <button onclick="window.print()" class="btn btn-primary">
+                            <i class="fas fa-print me-1"></i> Print Receipt
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print-specific styles -->
+<style>
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        .card, .card * {
+            visibility: visible;
+        }
+        .card {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            border: none;
+            box-shadow: none;
+        }
+        .card-footer, .btn {
+            display: none !important;
+        }
+    }
+</style>
+{% endblock %}

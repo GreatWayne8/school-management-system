@@ -56,6 +56,7 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'django.contrib.humanize',
 ]
 
 # Third party apps
@@ -81,6 +82,7 @@ PROJECT_APPS = [
     "messaging.apps.MessagingConfig",
     "health_wellness.apps.HealthWellnessConfig",
     "library.apps.LibraryConfig",
+    
 ]
 
 

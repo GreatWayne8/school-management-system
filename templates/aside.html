@@ -251,7 +251,11 @@
                     </a>
                 </li>
                 {% endif %}
-
+                <li class="{% if request.path == '/fees/payments/make/' %}active{% endif %}">
+                    <a href="{% url 'fees:make_payment' %}">
+                        <i class="fas fa-money-check-alt"></i> Make Payment
+                    </a>
+                </li>
                 <li class="{% if request.path == '/fees/payments/' %}active{% endif %}">
                     <a href="{% url 'fees:payment_list' %}">
                         <i class="fas fa-dollar-sign"></i> Payments
