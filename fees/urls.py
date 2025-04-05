@@ -27,4 +27,8 @@ urlpatterns = [
     path('dashboard/', views.fee_dashboard, name='dashboard'),
     path('statements/', views.student_statement, name='student_statement'),  
     path('statements/<int:student_id>/', views.student_statement, name='student_statement'), 
+
+    path('test-mpesa/', views.test_mpesa_integration, name='test_mpesa'),
+    path('test-auth/', views.test_auth, name='test_auth')
+
 ]

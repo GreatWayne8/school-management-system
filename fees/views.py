@@ -1,3 +1,6 @@
+import requests
+import json
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import get_user_model
@@ -7,15 +10,31 @@ from django.http import JsonResponse, HttpResponse
 from django.template.loader import render_to_string
 from weasyprint import HTML
 import tempfile
+from django.conf import settings
 from datetime import date
 from accounts.models import Parent
 from .models import (
     AcademicYear, Student, FeeCategory,
     FeeStructure, FeeStatement, Payment
 )
+from django.db.models import Sum
+from .mpesa_utils import (  
+    calculate_balance,
+    initiate_stk_push,
+    get_mpesa_access_token,
+    generate_mpesa_password,
+    get_current_timestamp
+)
 from .forms import FeeStructureForm, PaymentForm, AcademicYearForm
 from django.db.models import Count 
-
+from .mpesa_utils import initiate_stk_push
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.core.mail import EmailMultiAlternatives
 User = get_user_model()
 
 # Utility Functions
@@ -386,3 +405,298 @@ def delete_fee_structure(request, pk):
         messages.success(request, 'Fee structure deleted successfully!')
         return redirect('fees:fee_structure_list')
     return render(request, 'fees/confirm_delete.html', {'fee': fee})
+
+
+# -------------------------------------------------------------------------------------------------------------------------------------------
+#                                         Daraja Mpesa
+# -------------------------------------------------------------------------------------------------------------------------------------------
+
+def update_fee_statement(payment):
+    """
+    Update the student's fee statement after a successful payment
+    """
+    try:
+        statement, created = FeeStatement.objects.get_or_create(
+            student=payment.student,
+            fee_structure=payment.fee_structure,
+            defaults={
+                'total_amount': payment.fee_structure.amount,
+                'amount_paid': payment.amount_paid,
+                'balance': payment.fee_structure.amount - payment.amount_paid,
+                'last_payment_date': payment.payment_date
+            }
+        )
+        
+        if not created:
+            statement.amount_paid += payment.amount_paid
+            statement.balance = statement.total_amount - statement.amount_paid
+            statement.last_payment_date = payment.payment_date
+            statement.save()
+            
+            # Check if fee is fully paid
+            if statement.balance <= 0:
+                statement.fully_paid = True
+                statement.payment_completion_date = timezone.now()
+                statement.save()
+        
+        return True
+    except Exception as e:
+        print(f"Error updating fee statement: {str(e)}")
+        return False
+
+def send_payment_receipt(payment):
+    """
+    Send payment receipt email using the dedicated payment_receipt_email.html template
+    """
+    try:
+        context = {
+            'payment': payment,
+            'student': payment.student,
+            'school_name': "Vihiga Education City",  
+            'contact_email': "finance@vihigaeducationcity.sc.ke",
+            'contact_phone': "+254701728763",
+        }
+
+        html_content = render_to_string('fees/payment_receipt_email.html', context)
+        
+        text_content = strip_tags(html_content)
+
+        # Prepare email
+        subject = f"Payment Receipt - {payment.receipt_number}"
+        from_email = "Vihiga Education City School <noreply@vihigaeducationcity.sc.ke>"
+        
+        # Determine recipient(s)
+        recipients = [payment.payer.email]
+        if hasattr(payment.student, 'parent') and payment.student.parent.email:
+            recipients.append(payment.student.parent.email)
+
+        # Create email message
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=text_content,
+            from_email=from_email,
+            to=recipients,
+            reply_to=[context['contact_email']]
+        )
+        msg.attach_alternative(html_content, "text/html")
+
+        # Optional: Attach PDF receipt
+        # pdf_content = generate_pdf_receipt(payment) 
+        # msg.attach(f'receipt_{payment.receipt_number}.pdf', pdf_content, 'application/pdf')
+
+        # Send email
+        msg.send(fail_silently=False)
+        
+        # Log successful sending
+        payment.email_sent = True
+        payment.email_sent_at = timezone.now()
+        payment.save()
+        
+        return True
+    except Exception as e:
+        # Log the error
+        print(f"Error sending payment receipt email: {str(e)}")
+        
+        # Update payment record with failure
+        payment.email_sent = False
+        payment.email_attempts = (payment.email_attempts or 0) + 1
+        payment.save()
+        
+        return False
+
+def initiate_mpesa_payment(request, student_id):
+    student = get_object_or_404(Student, id=student_id)
+    
+    # Calculate balance for initial form data
+    balance_info = calculate_balance(student)
+    initial_amount = balance_info['balance'] if balance_info['balance'] > 0 else 0
+    
+    if request.method == 'POST':
+        form = PaymentForm(request.POST)
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.payer = request.user
+            payment.student = student
+            
+            # Validate payment amount doesn't exceed balance
+            if payment.amount_paid > balance_info['balance']:
+                messages.error(request, 'Payment amount cannot exceed outstanding balance')
+                return render(request, 'fees/make_payment.html', {
+                    'form': form,
+                    'student': student,
+                    'default_phone': settings.MPESA_TEST_PHONE
+                })
+            
+            # For M-Pesa payments
+            if payment.payment_method == 'MPesa':
+                phone_number = request.POST.get('phone_number', settings.MPESA_TEST_PHONE)
+                
+                try:
+                    # Format phone number (convert 07... to 2547...)
+                    formatted_phone = f"254{phone_number[1:]}" if phone_number.startswith('0') else phone_number
+                    
+                    response = initiate_stk_push(
+                        phone_number=formatted_phone,
+                        amount=payment.amount_paid,
+                        account_reference=payment.receipt_number
+                    )
+                    
+                    if response.get('ResponseCode') == '0':
+                        payment.status = 'Pending'
+                        payment.transaction_reference = response.get('CheckoutRequestID')
+                        payment.phone_number = formatted_phone  # Store formatted number
+                        payment.save()
+                        
+                        messages.success(request, 'Payment initiated! Check your phone to complete M-Pesa payment.')
+                        return redirect('fees:payment_list')
+                    else:
+                        error_message = response.get('errorMessage', 'Failed to initiate payment')
+                        messages.error(request, f'M-Pesa Error: {error_message}')
+                        
+                except Exception as e:
+                    messages.error(request, f'Error processing payment: {str(e)}')
+            else:
+                # For non-M-Pesa payments
+                payment.status = 'Completed'
+                payment.save()
+                
+                # Update fee statement immediately for non-M-Pesa payments
+                update_fee_statement(payment)
+                send_payment_receipt(payment)
+                
+                messages.success(request, 'Payment recorded successfully!')
+                return redirect('fees:payment_receipt', pk=payment.id)
+    else:
+        form = PaymentForm(initial={
+            'amount_paid': initial_amount,
+            'payment_method': 'MPesa'  # Default to M-Pesa
+        })
+    
+    return render(request, 'fees/make_payment.html', {
+        'form': form,
+        'student': student,
+        'default_phone': settings.MPESA_TEST_PHONE,
+        'balance_info': balance_info  # Pass to template 
+    })
+
+def initiate_stk_push(phone_number, amount, account_reference):
+    """Initiate M-Pesa STK push"""
+    access_token = get_mpesa_access_token()
+    api_url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "BusinessShortCode": settings.MPESA_SHORTCODE,
+        "Password": generate_mpesa_password(),
+        "Timestamp": get_current_timestamp(),
+        "TransactionType": "CustomerPayBillOnline",
+        "Amount": str(int(amount)),
+        "PartyA": phone_number,
+        "PartyB": settings.MPESA_SHORTCODE,
+        "PhoneNumber": phone_number,
+        "CallBackURL": settings.MPESA_CALLBACK_URL,
+        "AccountReference": account_reference,
+        "TransactionDesc": "School Fees Payment"
+    }
+    
+    response = requests.post(api_url, json=payload, headers=headers)
+    return response.json()
+
+@csrf_exempt
+def mpesa_callback(request):
+    """Handle M-Pesa callback"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            result_code = data.get('Body', {}).get('stkCallback', {}).get('ResultCode')
+            checkout_request_id = data.get('Body', {}).get('stkCallback', {}).get('CheckoutRequestID')
+            
+            if result_code == '0':
+                # Successful payment
+                payment = Payment.objects.get(transaction_reference=checkout_request_id)
+                payment.status = 'Completed'
+                
+                # Get M-Pesa transaction details
+                callback_metadata = data.get('Body', {}).get('stkCallback', {}).get('CallbackMetadata', {}).get('Item', [])
+                for item in callback_metadata:
+                    if item.get('Name') == 'MpesaReceiptNumber':
+                        payment.mpesa_code = item.get('Value')
+                    elif item.get('Name') == 'PhoneNumber':
+                        payment.phone_number = item.get('Value')
+                
+                payment.save()
+                
+                # Update fee statement
+                update_fee_statement(payment)
+                
+                # Send receipt to payer
+                send_payment_receipt(payment)
+                
+                return JsonResponse({'status': 'success'})
+            else:
+                # Failed payment
+                error_message = data.get('Body', {}).get('stkCallback', {}).get('ResultDesc', 'Payment failed')
+                payment = Payment.objects.get(transaction_reference=checkout_request_id)
+                payment.status = 'Failed'
+                payment.notes = error_message
+                payment.save()
+                
+                return JsonResponse({'status': 'failed', 'error': error_message})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    
+    return JsonResponse({'status': 'error'}, status=400)
+
+def test_mpesa_integration(request):
+    """Test endpoint for M-Pesa integration"""
+    test_phone = "254701728763"  # Your test phone number
+    test_amount = 1  # Test with 1 KES
+    test_reference = "TEST123"
+    
+    try:
+        # 1. Test authentication
+        token = get_mpesa_access_token()
+        if not token:
+            return JsonResponse({"status": "error", "message": "Authentication failed"}, status=500)
+        
+        # 2. Test STK push
+        response = initiate_stk_push(test_phone, test_amount, test_reference)
+        
+        if response.get('ResponseCode') == '0':
+            return JsonResponse({
+                "status": "success",
+                "message": "STK push initiated successfully",
+                "data": {
+                    "CheckoutRequestID": response.get('CheckoutRequestID'),
+                    "MerchantRequestID": response.get('MerchantRequestID')
+                }
+            })
+        else:
+            return JsonResponse({
+                "status": "error",
+                "message": response.get('errorMessage', 'Unknown error'),
+                "response": response
+            }, status=400)
+            
+    except Exception as e:
+        return JsonResponse({
+            "status": "error",
+            "message": str(e)
+        }, status=500)
+
+    
+def test_auth(request):
+    from requests.auth import HTTPBasicAuth
+    import requests
+    
+    url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+    auth = HTTPBasicAuth(settings.MPESA_CONSUMER_KEY, settings.MPESA_CONSUMER_SECRET)
+    
+    try:
+        response = requests.get(url, auth=auth)
+        return JsonResponse(response.json())
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

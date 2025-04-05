@@ -150,6 +150,9 @@ class Payment(models.Model):
     status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default="Pending")
     receipt_number = models.CharField(max_length=50, unique=True, blank=True)
     notes = models.TextField(blank=True, null=True)
+    email_sent = models.BooleanField(default=False)
+    email_sent_at = models.DateTimeField(null=True, blank=True)
+    email_attempts = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ['-payment_date']
